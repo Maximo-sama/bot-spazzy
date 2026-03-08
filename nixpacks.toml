@@ -1,0 +1,9 @@
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+```
+
+Questo forza Railway a installare le dipendenze. Poi:
+```
+git add .
+git commit -m "aggiunto nixpacks"
+git push
