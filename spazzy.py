@@ -56,4 +56,41 @@ async def tutto(update: Update, context: ContextTypes.DEFAULT_TYPE):
             testo += f"• {nome}: nessuna raccolta\n"
     await update.message.reply_text(testo)
 
-async def giorno_fisso(update
+async def giorno_fisso(update: Update, context: ContextTypes.DEFAULT_TYPE, giorno_num: int):
+    await update.message.reply_text(cosa_si_butta(giorno_num))
+
+async def manda_reminder(app):
+    giorno = datetime.now().weekday()
+    raccolta = calendario.get(giorno)
+    if raccolta:
+        testo = f"🔔 Reminder serale!\n{cosa_si_butta(giorno)}"
+        for chat_id in CHAT_IDS:
+            await app.bot.send_message(chat_id=chat_id, text=testo)
+        print(f"Reminder inviato: {testo}")
+    else:
+        print("Sabato — nessun reminder.")
+
+def avvia_scheduler(app):
+    def job():
+        asyncio.run(manda_reminder(app))
+    schedule.every().day.at("20:00").do(job)
+    while True:
+        schedule.run_pending()
+        time.sleep(30)
+
+app = ApplicationBuilder().token(TOKEN).build()
+app.add_handler(CommandHandler("stasera", stasera))
+app.add_handler(CommandHandler("domani", domani))
+app.add_handler(CommandHandler("tutto", tutto))
+app.add_handler(CommandHandler("lunedi", lambda u, c: giorno_fisso(u, c, 0)))
+app.add_handler(CommandHandler("martedi", lambda u, c: giorno_fisso(u, c, 1)))
+app.add_handler(CommandHandler("mercoledi", lambda u, c: giorno_fisso(u, c, 2)))
+app.add_handler(CommandHandler("giovedi", lambda u, c: giorno_fisso(u, c, 3)))
+app.add_handler(CommandHandler("venerdi", lambda u, c: giorno_fisso(u, c, 4)))
+app.add_handler(CommandHandler("sabato", lambda u, c: giorno_fisso(u, c, 5)))
+app.add_handler(CommandHandler("domenica", lambda u, c: giorno_fisso(u, c, 6)))
+
+threading.Thread(target=avvia_scheduler, args=(app,), daemon=True).start()
+
+print("Bot avviato.")
+app.run_polling()
